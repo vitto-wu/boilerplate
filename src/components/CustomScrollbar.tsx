@@ -3,17 +3,23 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useLenis } from './SmoothScrolling'
 
-export function CustomScrollbar() {
+interface CustomScrollbarProps {
+	autoHide?: boolean
+}
+
+export function CustomScrollbar({ autoHide = false }: CustomScrollbarProps) {
 	const lenis = useLenis()
-	const [isVisible, setIsVisible] = useState(false)
+	const [isVisible, setIsVisible] = useState(!autoHide)
 	const [isHovering, setIsHovering] = useState(false)
 	const [isDragging, setIsDragging] = useState(false)
+	const [isScrolling, setIsScrolling] = useState(false)
 	const [thumbHeight, setThumbHeight] = useState(20)
 	const [scrollTop, setScrollTop] = useState(0)
 
 	const trackRef = useRef<HTMLDivElement>(null)
 	const thumbRef = useRef<HTMLDivElement>(null)
 	const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+	const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 	const startDragY = useRef(0)
 	const startScrollTop = useRef(0)
 
@@ -46,6 +52,11 @@ export function CustomScrollbar() {
 
 	// Gerenciar visibilidade
 	const showScrollbar = useCallback(() => {
+		if (!autoHide) {
+			setIsVisible(true)
+			return
+		}
+
 		setIsVisible(true)
 		if (hideTimeoutRef.current) {
 			clearTimeout(hideTimeoutRef.current)
@@ -56,7 +67,7 @@ export function CustomScrollbar() {
 				setIsVisible(false)
 			}, 1500) // Esconde após 1.5s sem atividade
 		}
-	}, [isHovering, isDragging])
+	}, [isHovering, isDragging, autoHide])
 
 	// Efeito para reagir a mudanças de hover/drag
 	useEffect(() => {
@@ -68,6 +79,14 @@ export function CustomScrollbar() {
 		const handleScroll = () => {
 			updateScrollDimensions()
 			showScrollbar()
+
+			setIsScrolling(true)
+			if (scrollTimeoutRef.current) {
+				clearTimeout(scrollTimeoutRef.current)
+			}
+			scrollTimeoutRef.current = setTimeout(() => {
+				setIsScrolling(false)
+			}, 150)
 		}
 
 		window.addEventListener('scroll', handleScroll)
@@ -80,6 +99,7 @@ export function CustomScrollbar() {
 			window.removeEventListener('scroll', handleScroll)
 			window.removeEventListener('resize', updateScrollDimensions)
 			if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current)
+			if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current)
 		}
 	}, [updateScrollDimensions, showScrollbar])
 
@@ -164,7 +184,7 @@ export function CustomScrollbar() {
 		<div
 			ref={trackRef}
 			className={`fixed top-0 right-0 z-50 mr-1 h-full w-2 transition-opacity duration-300 ${
-				isVisible || isHovering || isDragging
+				!autoHide || isVisible || isHovering || isDragging
 					? 'opacity-100'
 					: 'opacity-0'
 			}`}
@@ -182,7 +202,11 @@ export function CustomScrollbar() {
 			{/* Thumb */}
 			<div
 				ref={thumbRef}
-				className="absolute right-0 w-2 cursor-pointer rounded-full bg-white transition-colors duration-500 hover:bg-gray-500 active:bg-gray-600"
+				className={`absolute right-0 cursor-pointer rounded-full transition-[width,background-color] duration-300 ${
+					isDragging || isScrolling
+						? 'w-3 bg-gray-900'
+						: 'w-2 bg-gray-500 hover:bg-gray-500 active:bg-gray-600'
+				}`}
 				style={{
 					height: `${thumbHeight}px`,
 					transform: `translateY(${scrollTop}px)`
