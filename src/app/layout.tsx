@@ -1,3 +1,5 @@
+import { CustomScrollbar } from '@/components/CustomScrollbar'
+import { SmoothScrolling } from '@/components/SmoothScrolling'
 import type { Metadata } from 'next'
 import { JetBrains_Mono } from 'next/font/google'
 import './globals.css'
@@ -20,7 +22,10 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body className={`${jetbrainsMono.variable} font-mono antialiased`}>
-				{children}
+				<SmoothScrolling>
+					<CustomScrollbar />
+					{children}
+				</SmoothScrolling>
 			</body>
 		</html>
 	)

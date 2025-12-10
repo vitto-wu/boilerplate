@@ -8,9 +8,9 @@ export default auth((req) => {
 		return Response.redirect(new URL('/', req.nextUrl.origin))
 	}
 
-	if (isLoggedIn && isPublicRoute) {
+	/* if (isLoggedIn && isPublicRoute) {
 		return Response.redirect(new URL('/dashboard', req.nextUrl.origin))
-	}
+	} */
 })
 
 export const config = {
